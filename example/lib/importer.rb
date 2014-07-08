@@ -1,8 +1,9 @@
-ADDRESS_IMPORT_BATCH_SIZE = 10
-
 class Importer
+
+  # increase/decrease depending on your available memory
+  ADDRESS_IMPORT_BATCH_SIZE = 100
+
   def initialize
-    @headers = nil
     @street_name_cache = {}
     @mop_name_cache = {}
     @momc_name_cache = {}
@@ -10,6 +11,8 @@ class Importer
     @city_part_cache = {}
     @addresses = []
     @parse_start = Time.now()
+
+    @update = true
   end
 
   def import_row(row)
@@ -29,7 +32,6 @@ class Importer
     attrs[:o] = nil if attrs[:o].blank?
 
     attrs[:zip] = row.zip
-    #raise "Empty \"PSČ\" in row #{row.inspect}" if attrs[:zip].blank?
 
     attrs[:code] = row.adm_code
 
@@ -37,8 +39,8 @@ class Importer
     attrs[:mop_name] = mop_name(row.mop_name)
     attrs[:momc_name] = momc_name(row.momc_name)
 
-    attrs[:city] = city(row.city_code, :name => row.city_name)
-    attrs[:city_part] = city_part(row.city_part_code, :name => row.city_part_name, :city => attrs[:city])
+    attrs[:city] = city(row.city_code, name: row.city_name)
+    attrs[:city_part] = city_part(row.city_part_code, name: row.city_part_name, city: attrs[:city])
     converter = JTSK::Converter.new
     result = converter.to_wgs48(row.gis_x.to_f, row.gis_y.to_f)
     attrs[:longitude], attrs[:latitude] = result.longitude, result.latitude
@@ -46,23 +48,25 @@ class Importer
   end
 
   def import_region(region)
-    model = Address::Region.find_or_initialize_by_mvcr_code(region.mvcr_code)
+    model = Address::Region.find_or_initialize_by(mvcr_code: region.mvcr_code)
     model.mvcr_name = region.mvcr_name
     model.ruian_code = region.ruian_code
     model.ruian_name = region.ruian_name
+    model.updated_at = Time.now   # make it dirty
     model.save!
   end
 
   def import_county(county)
-    model = Address::County.find_or_initialize_by_code(county.code)
+    model = Address::County.find_or_initialize_by(code: county.code)
     model.name = county.name
+    model.updated_at = Time.now   # make it dirty
     model.save!
   end
 
   def import_countyintegration(county_integration)
     Address::City.transaction do
-      if o = Address::City.find_by_code(county_integration.obec_code)
-        county = Address::County.find_by_code!(county_integration.pou_code)
+      if o = Address::City.find_by(code: county_integration.obec_code)
+        county = Address::County.find_by!(code: county_integration.pou_code)
         o.county = county
         o.save!
       end
@@ -71,8 +75,8 @@ class Importer
 
   def import_regionintegration(region_integration)
     Address::City.transaction do
-      if o = Address::City.find_by_code(region_integration.obec_code)
-        region = Address::Region.find_by_ruian_code!(region_integration.vusc_code)
+      if o = Address::City.find_by(code: region_integration.obec_code)
+        region = Address::Region.find_by!(ruian_code: region_integration.vusc_code)
         o.region = region
         o.save!
       end
@@ -83,11 +87,11 @@ class Importer
     flush_addresses
 
     Address::Place.transaction do
-      Address::Place.where(:imported => false).delete_all
-      Address::Place.where(:imported => true).update_all(:imported => false)
+      Address::Place.where(imported: false).delete_all
+      Address::Place.where(imported: true).update_all(imported: false)
     end
 
-    # remove untouched things
+    # remove untouched (non-dirty) things
     [
       Address::City,
       Address::CityPart,
@@ -104,13 +108,24 @@ class Importer
   private
 
   def flush_addresses
-    Address::Place.import(@addresses, :validate => false)
+    Address::Place.import(@addresses, validate: false)
     @addresses.clear
   end
 
   def street_name(name)
     if name.present?
-      @street_name_cache[name] ||= touch Address::StreetName.find_or_create_by_name!(name)
+      @street_name_cache[name] ||= begin
+        street_name = Address::StreetName.find_by(name: name)
+
+        if street_name
+          street_name.updated_at = Time.now
+          street_name.save!
+          street_name
+        else
+          street_name = Address::StreetName.create(name: name)
+        end
+      end
+
     else
       nil
     end
@@ -118,7 +133,18 @@ class Importer
 
   def mop_name(name)
     if name.present?
-      @mop_name_cache[name] ||= touch Address::MopName.find_or_create_by_name!(name)
+      @mop_name_cache[name] ||= begin
+        mop_name = Address::MopName.find_by(name: name)
+
+        if mop_name
+          mop_name.updated_at = Time.now
+          mop_name.save!
+          mop_name
+        else
+          mop_name = Address::MopName.create(name: name)
+        end
+      end
+
     else
       nil
     end
@@ -126,22 +152,56 @@ class Importer
 
   def momc_name(name)
     if name.present?
-      @momc_name_cache[name] ||= touch Address::MomcName.find_or_create_by_name!(name)
+      @momc_name_cache[name] ||= begin
+        momc_name = Address::MomcName.find_by(name: name)
+
+        if momc_name
+          momc_name.updated_at = Time.now
+          momc_name.save!
+          momc_name
+        else
+          momc_name = Address::MomcName.create(name: name)
+        end
+      end
+
     else
       nil
     end
   end
 
-
   def city(code, attrs)
-    # todo update?
-    @city_cache[code] ||= touch Address::City.find_or_create_by_code!(code, attrs)
+    if code.present?
+      @city_cache[code] ||= begin
+        city = Address::City.find_by(code: code)
+
+        if city
+          city.attributes = attrs
+          city.updated_at = Time.now
+          city.save!
+          city
+        else
+          city = Address::City.create!(attrs.merge(code: code))
+        end
+      end
+    else
+      nil
+    end
   end
 
   def city_part(code, attrs)
     if code.present?
-      #todo update?
-      @city_part_cache[code] ||= touch Address::CityPart.find_or_create_by_code!(code, attrs)
+      @city_part_cache[code] ||= begin
+        city_part = Address::CityPart.find_by(code: code)
+
+        if city_part
+          city_part.attributes = attrs
+          city_part.updated_at = Time.now
+          city_part.save!
+          city_part
+        else
+          city_part = Address::CityPart.create!(attrs.merge(code: code))
+        end
+      end
     else
       nil
     end
@@ -156,8 +216,4 @@ class Importer
     flush_addresses if @addresses.size > ADDRESS_IMPORT_BATCH_SIZE
   end
 
-  def touch(o)
-    o.touch if o.updated_at < @parse_start
-    o
-  end
 end
