@@ -20,6 +20,7 @@ tmp
 *.o
 *.a
 mkmf.log
-fixtures/CSV
-fixtures/vazby-cr.csv
-fixtures/vazby-okresy-cr.csv
+
+fixtures
+!fixtures/counties.csv
+!fixtures/regions.csv
