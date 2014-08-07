@@ -4,7 +4,7 @@ require 'zip'
 
 class Ruian
   class EnumUpdater
-    URL = "http://vdp.cuzk.cz/vymenny_format/csv/20140331_strukt_ADR.csv.zip"
+    URL = "http://vdp.cuzk.cz/vymenny_format/csv/20140630_strukt_ADR.csv.zip"
 
     def update!
       download

@@ -4,7 +4,7 @@ require 'zip'
 
 class Ruian
   class FilesUpdater
-    URL = "http://vdp.cuzk.cz/vymenny_format/csv/20140331_OB_ADR_csv.zip"
+    URL = "http://vdp.cuzk.cz/vymenny_format/csv/20140630_OB_ADR_csv.zip"
 
     def update!
       download

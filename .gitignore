@@ -21,3 +21,5 @@ tmp
 *.a
 mkmf.log
 fixtures/CSV
+fixtures/vazby-cr.csv
+fixtures/vazby-okresy-cr.csv
