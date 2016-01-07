@@ -27,10 +27,10 @@ class Ruian
     Pathname.new(File.expand_path('../', File.dirname(__FILE__)))
   end
 
-  def initialize(importer = Ruian::Importer.new)
-    self.fetcher = Ruian::Fetcher.new
-    self.importer = importer
-    self.queue = Ruian::Queue.new(importer)
+  def initialize(options = {})
+    self.fetcher  = options[:fetcher]  || Ruian::Fetcher.new
+    self.importer = options[:importer] || Ruian::Importer.new
+    self.queue    = Ruian::Queue.new(importer)
   end
 
   def fetch_rows
