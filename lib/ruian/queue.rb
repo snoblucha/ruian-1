@@ -8,13 +8,13 @@ class Ruian
       self.importer = importer
     end
 
-    def push(obj)
+    def push(obj, file)
       key = obj.class.to_s.split('::').last.downcase
-      callback(key, obj)
+      callback(key, obj, file)
     end
 
-    def callback(key, obj)
-      self.importer.send(callback_key(key), obj)
+    def callback(key, obj, file)
+      self.importer.send(callback_key(key), obj, file)
     end
 
     def callback_key(key)

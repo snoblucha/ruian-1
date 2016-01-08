@@ -15,7 +15,7 @@ class Importer
     @update = true
   end
 
-  def import_row(row)
+  def import_row(row, file)
     attrs = {}
 
     case row.so_type
@@ -47,7 +47,7 @@ class Importer
     add_address(attrs)
   end
 
-  def import_region(region)
+  def import_region(region, file)
     model = Address::Region.find_or_initialize_by(mvcr_code: region.mvcr_code)
     model.mvcr_name = region.mvcr_name
     model.ruian_code = region.ruian_code
@@ -56,14 +56,14 @@ class Importer
     model.save!
   end
 
-  def import_county(county)
+  def import_county(county, file)
     model = Address::County.find_or_initialize_by(code: county.code)
     model.name = county.name
     model.updated_at = Time.now   # make it dirty
     model.save!
   end
 
-  def import_countyintegration(county_integration)
+  def import_countyintegration(county_integration, file)
     Address::City.transaction do
       if o = Address::City.find_by(code: county_integration.obec_code)
         county = Address::County.find_by!(code: county_integration.pou_code)
@@ -73,7 +73,7 @@ class Importer
     end
   end
 
-  def import_regionintegration(region_integration)
+  def import_regionintegration(region_integration, file)
     Address::City.transaction do
       if o = Address::City.find_by(code: region_integration.obec_code)
         region = Address::Region.find_by!(ruian_code: region_integration.vusc_code)

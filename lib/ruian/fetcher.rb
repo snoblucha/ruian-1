@@ -6,7 +6,7 @@ class Ruian
         Ruian::Parser.foreach(file) do |attributes|
           attributes = attributes.collect(&:last)
           model = Ruian::Model::Row.new(*attributes)
-          queue.push(model)
+          queue.push(model, file)
         end
         yield
       end
@@ -16,7 +16,7 @@ class Ruian
       Ruian::Parser.foreach(region_file, encoding: 'utf-8') do |attributes|
         attributes = attributes.collect(&:last)
         model = Ruian::Model::Region.new(*attributes)
-        queue.push(model)
+        queue.push(model, region_file)
       end
       yield
     end
@@ -25,7 +25,7 @@ class Ruian
       Ruian::Parser.foreach(county_file, encoding: 'utf-8') do |attributes|
         attributes = attributes.collect(&:last)
         model = Ruian::Model::County.new(*attributes)
-        queue.push(model)
+        queue.push(model, county_file)
       end
       yield
     end
@@ -34,7 +34,7 @@ class Ruian
       Ruian::Parser.foreach(county_integration_file) do |attributes|
         attributes = attributes.collect(&:last)
         model = Ruian::Model::CountyIntegration.new(*attributes)
-        queue.push(model)
+        queue.push(model, county_integration_file)
       end
       yield
     end
@@ -43,7 +43,7 @@ class Ruian
       Ruian::Parser.foreach(region_integration_file) do |attributes|
         attributes = attributes.collect(&:last)
         model = Ruian::Model::RegionIntegration.new(*attributes)
-        queue.push(model)
+        queue.push(model, region_integration_file)
       end
       yield
     end
