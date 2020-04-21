@@ -76,9 +76,9 @@ class Ruian
   end
 
   def all
-    fetch_rows
     fetch_regions
     fetch_counties
+    fetch_rows
     fetch_integrate_counties
     fetch_integrate_regions
     self.importer.finalize!
