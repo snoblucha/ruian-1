@@ -24,3 +24,10 @@ mkmf.log
 fixtures
 !fixtures/counties.csv
 !fixtures/regions.csv
+/.idea/$CACHE_FILE$
+/.idea/.gitignore
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/dictionaries/petr.xml
+/.idea/ruian-1.iml
+/.idea/vcs.xml

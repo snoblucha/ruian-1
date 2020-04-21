@@ -1,6 +1,12 @@
 class Ruian
   class Fetcher
 
+    attr_reader :directory
+
+    def initialize(directory = fixtures_directory)
+      @directory = directory
+    end
+
     def parse_rows(queue, &block)
       row_files.each do |file|
         Ruian::Parser.foreach(file) do |attributes|
@@ -48,24 +54,28 @@ class Ruian
       yield
     end
 
+    def fixtures_directory
+      Ruian.root.join('fixtures')
+    end
+
     def row_files
-      @files ||= Dir.glob(Ruian.root.join('fixtures/CSV', '*.csv'))
+      @files ||= Dir.glob(directory.join('CSV', '*.csv'))
     end
 
     def region_file
-      @region_file = Ruian.root.join('fixtures', 'regions.csv')
+      @region_file = fixtures_directory.join('regions.csv')
     end
 
     def county_file
-      @county_file = Ruian.root.join('fixtures', 'counties.csv')
+      @county_file = fixtures_directory.join('counties.csv')
     end
 
     def county_integration_file
-      @count_integration_file = Ruian.root.join('fixtures', 'vazby-okresy-cr.csv')
+      @count_integration_file = directory.join('strukturovane-CSV', 'vazby-okresy-cr.csv')
     end
 
     def region_integration_file
-      @city_integration_file = Ruian.root.join('fixtures', 'vazby-cr.csv')
+      @city_integration_file = directory.join('strukturovane-CSV',  'vazby-cr.csv')
     end
   end
 end

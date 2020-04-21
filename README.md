@@ -1,6 +1,7 @@
 # Ruian
 
-TODO: Write a gem description
+RUIAN gem for downloading RUIAN addresses from http://nahlizenidokn.cuzk.cz/StahniAdresniMistaRUIAN.aspx. 
+It downloads files and then it can pass data to importer.
 
 ## Installation
 
@@ -19,6 +20,14 @@ Or install it yourself as:
 ## Usage
 
 See example directory.
+
+You can import rows.
+
+```
+Ruian.new(importer: Importer.new).all    
+```
+
+
 
 ## Contributing
 
